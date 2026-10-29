@@ -64,3 +64,32 @@ jobs:
         run: |
           docker push "$IMAGE_NAME:$GITHUB_SHA"
           docker push "$IMAGE_NAME:latest"
+
+  deploy:
+    name: Deploy PetClinic with Ansible
+    needs: docker-build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, Linux, X64, deploy]
+    timeout-minutes: 15
+
+    steps:
+      - name: Verify deployment environment
+        run: |
+          echo "Deploying commit: $GITHUB_SHA"
+          whoami
+          docker --version
+          ansible --version
+
+      - name: Deploy PetClinic
+        run: |
+          ansible-playbook /home/sadok/devops26/ansible/deploy-petclinic.yml \
+            --extra-vars "deploy_tag=$GITHUB_SHA"
+
+      - name: Verify PetClinic HTTP response
+        run: |
+          curl --fail --silent --show-error \
+            --retry 10 \
+            --retry-delay 5 \
+            --retry-connrefused \
+            --max-time 10 \
+            http://localhost:8082/
