@@ -1,0 +1,18 @@
+
+name: Self-hosted Runner Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-runner:
+    runs-on: [self-hosted, Linux, X64, deploy]
+
+    steps:
+      - name: Check runner machine
+        run: |
+          echo "Runner connected successfully"
+          hostname
+          whoami
+          docker --version
+          ansible --version
