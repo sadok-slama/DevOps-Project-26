@@ -38,6 +38,6 @@ jobs:
           format: table
           vuln-type: os,library
           severity: CRITICAL,HIGH,MEDIUM
-          ignore-unfixed: true
+          ignore-unfixed: false
           exit-code: '0'
           skip-setup-trivy: true
