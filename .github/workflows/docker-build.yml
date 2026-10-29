@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   docker-build:
-    name: Build and scan Docker image
+    name: Build, scan and publish Docker image
     runs-on: ubuntu-latest
 
     steps:
@@ -41,3 +41,26 @@ jobs:
           ignore-unfixed: false
           exit-code: '0'
           skip-setup-trivy: true
+
+      - name: Log in to Docker Hub
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Tag Docker image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          IMAGE_NAME: sadokslamaesprit/devops26
+        run: |
+          docker tag petclinic:ci "$IMAGE_NAME:$GITHUB_SHA"
+          docker tag petclinic:ci "$IMAGE_NAME:latest"
+
+      - name: Push Docker image to Docker Hub
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          IMAGE_NAME: sadokslamaesprit/devops26
+        run: |
+          docker push "$IMAGE_NAME:$GITHUB_SHA"
+          docker push "$IMAGE_NAME:latest"
