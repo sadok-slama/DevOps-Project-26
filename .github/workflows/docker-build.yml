@@ -85,11 +85,24 @@ jobs:
           ansible-playbook /home/sadok/devops26/ansible/deploy-petclinic.yml \
             --extra-vars "deploy_tag=$GITHUB_SHA"
 
+
       - name: Verify PetClinic HTTP response
         run: |
-          curl --fail --silent --show-error \
-            --retry 10 \
-            --retry-delay 5 \
-            --retry-connrefused \
-            --max-time 10 \
-            http://localhost:8082/
+          for attempt in {1..18}; do
+            echo "Health check attempt $attempt/18"
+
+            if curl --fail --silent --show-error \
+              --max-time 10 \
+              http://localhost:8082/; then
+              echo "PetClinic is responding successfully."
+              exit 0
+            fi
+
+            sleep 5
+          done
+
+          echo "PetClinic did not become available in time."
+          docker compose -f /home/sadok/devops26/docker-compose.yml ps
+          docker compose -f /home/sadok/devops26/docker-compose.yml logs --tail=100 petclinic
+          exit 1
+      
